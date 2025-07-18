@@ -291,7 +291,7 @@ def main():
                 for cmt in class_comments:
                     cmt_text = cmt.lstrip("'").lstrip("//").strip()
                     swift_code += f'/// {cmt_text}\n'
-                swift_code += f'open class {class_name} {{\n'
+                swift_code += f'class {class_name} {{\n'
                 for prop_name, prop_type, comments in properties:
                     for cmt in comments:
                         cmt_text = cmt.lstrip("'").lstrip("//").strip()
