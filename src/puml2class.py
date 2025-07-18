@@ -291,7 +291,7 @@ def main():
                 for cmt in class_comments:
                     cmt_text = cmt.lstrip("'").lstrip("//").strip()
                     swift_code += f'/// {cmt_text}\n'
-                swift_code += f'class {class_name} {{\n'
+                swift_code += f'open class {class_name} {{\n'
                 for prop_name, prop_type, comments in properties:
                     for cmt in comments:
                         cmt_text = cmt.lstrip("'").lstrip("//").strip()
@@ -308,10 +308,6 @@ def main():
 
                 # Write to output_dir
                 print(f"Generated Swift code for {class_name}:\n{swift_code}")
-                swift_code = swift_code.replace(
-                    'class ',
-                    f'open class {class_name} '
-                )
                 swift_file_path = os.path.join(cli_args.output_dir, f'{class_name}.swift')
                 with open(swift_file_path, 'w', encoding='utf-8') as f:
                     f.write(swift_code)
