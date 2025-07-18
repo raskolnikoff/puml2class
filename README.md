@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/yourusername/puml2class/actions/workflows/ci.yml/badge.svg)](https://github.com/yourusername/puml2class/actions/workflows/ci.yml)
+[![Build Status](https://github.com/raskolnikoff/puml2class/actions/workflows/ci.yml/badge.svg)](https://github.com/raskolnikoff/puml2class/actions/workflows/ci.yml)
 [![Python Version](https://img.shields.io/badge/python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
