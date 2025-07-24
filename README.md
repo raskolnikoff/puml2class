@@ -11,10 +11,15 @@ Designed for model-driven development, it supports advanced type mapping, multip
 
 - Converts PlantUML class diagrams (.puml) to Swift class files (.swift), one file per class
 - Supports arrays, optionals, generics (List/Map/Set/Result) with automatic Swift idiom mapping
+- Leaves custom types (e.g., `Map`, `Chunk`) unmapped in Swift output, so you can define them as needed in your Swift codebase
 - Handles properties, methods (with multiple arguments, custom types), and return types robustly
 - Extracts comments (`'` or `//` lines) as Swift `///` documentation comments
 - CLI: input/output directory, batch processing
 - Ready for multi-language backend (future: TypeScript, Kotlin, Java, ...)
+
+## Custom Types
+
+If your PlantUML uses custom types (such as `Map`, `Chunk`, etc.), the generated Swift code will reference these types directly. You must define these types in your Swift project for the code to compile successfully. This approach provides flexibility for future extensions and custom class support.
 
 ## Usage
 
