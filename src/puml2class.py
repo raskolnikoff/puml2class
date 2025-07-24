@@ -214,33 +214,36 @@ def main():
                     line_no_inline_comment = re.sub(r'//.*$', '', line_stripped)
                     line_no_inline_comment = re.sub(r"'.*$", '', line_no_inline_comment).strip()
                     if not line_no_inline_comment:
-                        # blank line or comment-only line after stripping
                         pending_comments = []
                         continue
-                    if not (line_no_inline_comment.startswith('+') or line_no_inline_comment.startswith('-') or line_no_inline_comment.startswith('#')):
-                        # Not a property or method line, reset pending_comments
+                    if not (line_no_inline_comment.startswith('+') or line_no_inline_comment.startswith(
+                            '-') or line_no_inline_comment.startswith('#')):
                         pending_comments = []
                         continue
-                    # Match "+name(args): ReturnType" (method, super greedy return type)
-                    m_method_full = re.search(r'^[+\-#]\s*(\w+)\s*\((.*?)\)\s*:\s*(.+)$', line_no_inline_comment)
-                    if m_method_full:
-                        method_name = m_method_full.group(1).strip()
-                        params_str = m_method_full.group(2).strip()
-                        return_type = m_method_full.group(3).strip() if m_method_full.group(3).strip() else 'Void'
-                        params_rendered = ''
-                        if params_str:
-                            param_list = []
-                            for param in params_str.split(','):
-                                param = param.strip()
-                                if not param:
-                                    continue
-                                if ':' in param:
-                                    param_name, param_type = map(str.strip, param.split(':', 1))
-                                    param_list.append(f"{param_name}: {map_swift_type(param_type)}")
-                                else:
-                                    param_list.append(f"{param}: Any")
-                            params_rendered = ', '.join(param_list)
-                        methods.append((method_name, params_rendered, map_swift_type(return_type), pending_comments))
+                    # Match "+name: Type = defaultValue"
+                    m_property_default = re.search(r'^[+\-#]\s*(\w+)\s*:\s*([\w\[\]\*\._<>]+)\s*=\s*(.+)$',
+                                                   line_no_inline_comment)
+                    if m_property_default:
+                        prop_name = m_property_default.group(1)
+                        prop_type = m_property_default.group(2) if m_property_default.group(2) else 'Any'
+                        default_value = m_property_default.group(3).strip()
+                        properties.append((prop_name, prop_type, pending_comments, default_value))
+                        pending_comments = []
+                        continue
+                    # Match "+Type name"
+                    m_property = re.search(r'^[+\-#]\s*([\w\[\]\*\._<>]+)\s+(\w+)$', line_no_inline_comment)
+                    if m_property:
+                        prop_type = m_property.group(1) if m_property.group(1) else 'Any'
+                        prop_name = m_property.group(2)
+                        properties.append((prop_name, prop_type, pending_comments, None))
+                        pending_comments = []
+                        continue
+                    # Alternate property pattern "+name: Type"
+                    m_property_alt = re.search(r'^[+\-#]\s*(\w+)\s*:\s*([\w\[\]\*\._<>]+)', line_no_inline_comment)
+                    if m_property_alt:
+                        prop_name = m_property_alt.group(1)
+                        prop_type = m_property_alt.group(2) if m_property_alt.group(2) else 'Any'
+                        properties.append((prop_name, prop_type, pending_comments, None))
                         pending_comments = []
                         continue
 
@@ -292,19 +295,35 @@ def main():
                     cmt_text = cmt.lstrip("'").lstrip("//").strip()
                     swift_code += f'/// {cmt_text}\n'
                 swift_code += f'class {class_name} {{\n'
-                for prop_name, prop_type, comments in properties:
+                for prop_name, prop_type, comments, _ in properties:
                     for cmt in comments:
                         cmt_text = cmt.lstrip("'").lstrip("//").strip()
                         swift_code += f'    /// {cmt_text}\n'
                     swift_code += f'    var {prop_name}: {map_swift_type(prop_type)}\n'
                 if properties:
-                    swift_code += '\n'
+                    params = ', '.join([
+                        f'{prop_name}: {map_swift_type(prop_type)}{f" = {default_value}" if default_value else ""}'
+                        for prop_name, prop_type, _, default_value in properties
+                    ])
+                    swift_code += f'\n    init({params}) {{\n'
+                    for prop_name, _, _, _ in properties:
+                        swift_code += f'        self.{prop_name} = {prop_name}\n'
+                    swift_code += '    }\n'
                 for method_name, params, ret_type, comments in methods:
                     for cmt in comments:
                         cmt_text = cmt.lstrip("'").lstrip("//").strip()
                         swift_code += f'    /// {cmt_text}\n'
                     swift_code += f'    func {method_name}({params}) -> {ret_type} {{\n        // TODO: implement\n    }}\n'
                 swift_code += '}\n'
+
+                # Add import Foundation if Data is used
+                if 'Data' in swift_code:
+                    swift_code = 'import Foundation\n\n' + swift_code
+
+                # Write to output_dir
+                swift_file_path = os.path.join(cli_args.output_dir, f'{class_name}.swift')
+                with open(swift_file_path, 'w', encoding='utf-8') as f:
+                    f.write(swift_code)
 
                 # Write to output_dir
                 print(f"Generated Swift code for {class_name}:\n{swift_code}")

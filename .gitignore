@@ -403,3 +403,4 @@ fabric.properties
 templates/*.*
 uml/*.*
 uml/*.puml
+.DS_Store
